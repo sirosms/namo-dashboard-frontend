@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>🐱 NAMO — 고등어 냥이 대시보드</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --pink:#ff85a2;--pink-l:#ffd6e0;--lav:#c9b8f5;--mint:#3db887;
+  --cream:#fff8f0;--brown:#c4956a;--text:#5c3d2e;--ts:#9b7e6e;
+  --bg:#fff5f7;--card:#fff;--sh:0 4px 20px rgba(255,133,162,.13);
+}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* ── 헤더 ─── */
+header{background:linear-gradient(135deg,#ff85a2,#c9b8f5);height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;box-shadow:0 4px 20px rgba(255,133,162,.3);position:sticky;top:0;z-index:99}
+.h-left{display:flex;align-items:center;gap:12px}
+.cat-orb{width:42px;height:42px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 2px 10px rgba(0,0,0,.15);animation:bob 2s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+.h-title{color:#fff;font-weight:900;font-size:18px;line-height:1.2;text-shadow:0 1px 4px rgba(0,0,0,.15)}
+.h-title small{font-size:11px;font-weight:600;opacity:.85;display:block}
+.h-right{display:flex;align-items:center;gap:10px}
+#upd{font-size:11px;color:rgba(255,255,255,.85);font-weight:600}
+.btn{background:#fff;color:var(--pink);border:none;padding:7px 16px;border-radius:20px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.1);transition:transform .2s}
+.btn:hover{transform:translateY(-2px)}
+.btn:active{transform:translateY(0)}
+
+/* ── 탭 ─── */
+.tabs{display:flex;gap:0;padding:0 20px;background:#fff;box-shadow:0 1px 8px rgba(0,0,0,.06);overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{padding:14px 18px;font-size:13px;font-weight:800;color:var(--ts);border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap;transition:color .2s}
+.tab.active{color:var(--pink);border-color:var(--pink)}
+.tab:hover:not(.active){color:var(--text)}
+
+/* ── 컨테이너 ─── */
+.container{max-width:1100px;margin:0 auto;padding:20px 16px}
+.page{display:none}.page.active{display:block}
+
+/* ── 배너 ─── */
+.banner{background:#fff;border-radius:20px;padding:20px;margin-bottom:20px;display:flex;align-items:center;gap:18px;box-shadow:var(--sh);border:2px solid var(--pink-l);position:relative;overflow:hidden}
+.banner::before{content:'🐾🐾🐾';position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:28px;opacity:.08;letter-spacing:4px}
+.banner svg{width:80px;height:80px;flex-shrink:0;filter:drop-shadow(0 3px 10px rgba(255,133,162,.25))}
+.banner-text h2{font-size:17px;font-weight:900;color:var(--pink);margin-bottom:4px}
+.banner-text p{font-size:12px;color:var(--ts);line-height:1.6;font-weight:600}
+
+/* ── 요약 카드 ─── */
+.cards{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px}
+@media(min-width:640px){.cards{grid-template-columns:repeat(4,1fr)}}
+.card{background:#fff;border-radius:16px;padding:18px 14px;box-shadow:var(--sh);border:2px solid transparent;position:relative;overflow:hidden;transition:transform .2s}
+.card:hover{transform:translateY(-2px)}
+.card::after{content:attr(data-e);position:absolute;right:10px;bottom:6px;font-size:28px;opacity:.1}
+.card.p{border-color:var(--pink-l);background:linear-gradient(135deg,#fff,#fff5f7)}
+.card.l{border-color:#ede8ff;background:linear-gradient(135deg,#fff,#f5f0ff)}
+.card.m{border-color:#d4f5ec;background:linear-gradient(135deg,#fff,#f0fdf8)}
+.card.o{border-color:#ffe4c4;background:linear-gradient(135deg,#fff,#fff8f0)}
+.card .lbl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1.2px;color:var(--ts);margin-bottom:8px}
+.card .val{font-size:20px;font-weight:900}
+.card .sub{font-size:10px;color:var(--ts);margin-top:3px;font-weight:600}
+.cp{color:var(--pink)}.cl{color:#8b72e0}.cm{color:var(--mint)}.co{color:#ff8c00}
+
+/* ── 경고 배너 ─── */
+.alert{background:linear-gradient(135deg,#fff0f4,#fff8f0);border:2px solid var(--pink);border-radius:14px;padding:14px 16px;margin-bottom:12px;display:flex;align-items:flex-start;gap:10px}
+.alert .ai{font-size:24px;flex-shrink:0}
+.alert h4{font-size:13px;font-weight:900;color:var(--pink);margin-bottom:2px}
+.alert p{font-size:12px;color:var(--text);font-weight:600}
+
+/* ── 코인 카드 그리드 ─── */
+.grid{display:grid;grid-template-columns:1fr;gap:14px}
+@media(min-width:580px){.grid{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:900px){.grid{grid-template-columns:repeat(3,1fr)}}
+.cc{background:#fff;border-radius:18px;padding:18px;box-shadow:var(--sh);border:2px solid var(--pink-l);transition:transform .2s}
+.cc:hover{transform:translateY(-2px)}
+.cc.danger{border-color:#ffb3b3;background:linear-gradient(135deg,#fff,#fff5f5)}
+.cc-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.coin-left{display:flex;align-items:center;gap:10px}
+.icon{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#fff;flex-shrink:0}
+.icon.BTC{background:linear-gradient(135deg,#f7931a,#ffb347)}
+.icon.ETH{background:linear-gradient(135deg,#627eea,#a3b3f5)}
+.icon.XRP{background:linear-gradient(135deg,#346aa9,#5b9bd5)}
+.icon.XLM{background:linear-gradient(135deg,#08b5e5,#56d0f0)}
+.icon.SOL{background:linear-gradient(135deg,#9945ff,#c77dff)}
+.icon.DOGE{background:linear-gradient(135deg,#c2a633,#f0d060)}
+.icon.BABY{background:linear-gradient(135deg,#ff85a2,#ffb7c5)}
+.cn{font-size:16px;font-weight:900;color:var(--text)}
+.cq{font-size:11px;color:var(--ts);font-weight:600}
+.chg{font-size:12px;font-weight:800;padding:3px 9px;border-radius:9px}
+.up{background:#e8f9f0;color:#2ea05a}
+.dn{background:#ffeaea;color:#e03e3e}
+.cp2{font-size:20px;font-weight:900;color:var(--text);margin-bottom:2px}
+.cv{font-size:12px;color:var(--ts);font-weight:600;margin-bottom:10px}
+.pnl-row{display:flex;justify-content:space-between;align-items:center;background:#fafafa;border-radius:10px;padding:8px 12px;margin-bottom:10px;font-size:12px;font-weight:700}
+.pnl-row .pnl-lbl{color:var(--ts)}
+.pnl-pos{color:#2ea05a}.pnl-neg{color:#e03e3e}
+
+/* 손절 게이지 */
+.sl-wrap{margin-top:10px}
+.sl-head{display:flex;justify-content:space-between;font-size:10px;font-weight:800;color:var(--ts);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px}
+.bar-bg{height:7px;background:#f0e8f5;border-radius:7px;overflow:hidden}
+.bar{height:100%;border-radius:7px;transition:width .6s}
+.bar.safe{background:linear-gradient(90deg,#8ee3c8,#3db887)}
+.bar.warn{background:linear-gradient(90deg,#ffb347,#ff8c00)}
+.bar.danger{background:linear-gradient(90deg,#ff85a2,#e03e3e)}
+.sl-gap{font-size:11px;font-weight:800;text-align:right;margin-top:4px}
+
+/* ── 시장 테이블 ─── */
+.mkt-table{background:#fff;border-radius:18px;overflow:hidden;box-shadow:var(--sh)}
+.mkt-table table{width:100%;border-collapse:collapse}
+.mkt-table th{background:#fff5f7;padding:10px 14px;text-align:left;font-size:11px;font-weight:800;color:var(--ts);text-transform:uppercase;letter-spacing:.8px}
+.mkt-table td{padding:10px 14px;border-top:1px solid #ffeef2;font-size:13px;font-weight:600}
+.mkt-table tr:hover td{background:#fffafc}
+.rank{color:var(--ts);font-size:12px}
+
+/* ── 로딩/빈 ─── */
+.empty{text-align:center;padding:40px;font-size:16px;font-weight:700;color:var(--ts)}
+
+/* ── 섹션 제목 ─── */
+.stitle{font-size:15px;font-weight:900;color:var(--text);margin:20px 0 12px;display:flex;align-items:center;gap:8px}
+.stitle::after{content:'';flex:1;height:2px;background:linear-gradient(90deg,var(--pink-l),transparent);border-radius:2px;margin-left:8px}
+
+/* ── 푸터 ─── */
+footer{text-align:center;padding:28px 0 16px;font-size:11px;color:var(--ts);font-weight:600}
+footer .paws{font-size:20px;margin-bottom:4px;letter-spacing:5px;opacity:.3}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="h-left">
+    <div class="cat-orb">🐱</div>
+    <div class="h-title">NAMO Dashboard<small>고등어 냥이 에디션 🐟</small></div>
+  </div>
+  <div class="h-right">
+    <span id="upd">로딩 중...</span>
+    <button class="btn" onclick="loadAll()">🔄 새로고침</button>
+  </div>
+</header>
+
+<!-- 탭 -->
+<div class="tabs">
+  <div class="tab active" onclick="showTab('portfolio')">🏠 내 포트폴리오</div>
+  <div class="tab" onclick="showTab('market')">📊 시장 현황</div>
+</div>
+
+<div class="container">
+
+  <!-- ── 포트폴리오 탭 ── -->
+  <div id="tab-portfolio" class="page active">
+
+    <!-- 고등어 냥이 배너 -->
+    <div class="banner">
+      <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="100" cy="135" rx="60" ry="52" fill="#e8d5b7"/>
+        <path d="M52,112 Q100,100 148,112" stroke="#c4956a" stroke-width="3.5" fill="none" opacity=".5"/>
+        <path d="M47,127 Q100,115 153,127" stroke="#c4956a" stroke-width="3.5" fill="none" opacity=".5"/>
+        <path d="M50,142 Q100,130 150,142" stroke="#c4956a" stroke-width="3" fill="none" opacity=".45"/>
+        <circle cx="100" cy="76" r="50" fill="#e8d5b7"/>
+        <polygon points="56,42 40,10 73,33" fill="#e8d5b7"/>
+        <polygon points="144,42 160,10 127,33" fill="#e8d5b7"/>
+        <polygon points="58,40 44,15 71,33" fill="#ffb7c5"/>
+        <polygon points="142,40 156,15 129,33" fill="#ffb7c5"/>
+        <path d="M70,32 Q100,24 130,32" stroke="#c4956a" stroke-width="2.5" fill="none" opacity=".4"/>
+        <path d="M65,46 Q100,38 135,46" stroke="#c4956a" stroke-width="2.5" fill="none" opacity=".35"/>
+        <ellipse cx="76" cy="73" rx="12" ry="14" fill="#2d7a3a"/>
+        <ellipse cx="124" cy="73" rx="12" ry="14" fill="#2d7a3a"/>
+        <ellipse cx="76" cy="74" rx="5.5" ry="11" fill="#111"/>
+        <ellipse cx="124" cy="74" rx="5.5" ry="11" fill="#111"/>
+        <circle cx="80" cy="69" r="3.5" fill="white"/>
+        <circle cx="128" cy="69" r="3.5" fill="white"/>
+        <ellipse cx="100" cy="88" rx="6" ry="4.5" fill="#ffb7c5"/>
+        <path d="M94,93 Q100,99 106,93" stroke="#c4956a" stroke-width="2" fill="none"/>
+        <line x1="28" y1="85" x2="82" y2="90" stroke="#bbb" stroke-width="1.3" opacity=".7"/>
+        <line x1="28" y1="92" x2="82" y2="92" stroke="#bbb" stroke-width="1.3" opacity=".7"/>
+        <line x1="118" y1="90" x2="172" y2="85" stroke="#bbb" stroke-width="1.3" opacity=".7"/>
+        <line x1="118" y1="92" x2="172" y2="92" stroke="#bbb" stroke-width="1.3" opacity=".7"/>
+        <ellipse cx="68" cy="180" rx="20" ry="13" fill="#e8d5b7"/>
+        <ellipse cx="132" cy="180" rx="20" ry="13" fill="#e8d5b7"/>
+        <ellipse cx="68" cy="183" rx="11" ry="6" fill="#ffb7c5" opacity=".55"/>
+        <ellipse cx="132" cy="183" rx="11" ry="6" fill="#ffb7c5" opacity=".55"/>
+      </svg>
+      <div class="banner-text">
+        <h2>냥이가 코인 지키는 중~ 🐟</h2>
+        <p>고등어 냥이가 열심히 잔고 감시 중이에요!<br>
+        매도할 땐 꼭 허락 받고 할게요 🐾<br>
+        30초마다 자동 업데이트 ₩(*ΦωΦ*)₩</p>
+      </div>
+    </div>
+
+    <!-- 손절 경고 -->
+    <div id="alerts"></div>
+
+    <!-- 요약 카드 -->
+    <div class="cards">
+      <div class="card p" data-e="💰"><div class="lbl">🐱 총 자산</div><div class="val cp" id="c-total">—</div><div class="sub">KRW + 코인</div></div>
+      <div class="card l" data-e="🏦"><div class="lbl">💜 KRW 가용</div><div class="val cl" id="c-krw">—</div><div class="sub">즉시 사용 가능</div></div>
+      <div class="card m" data-e="🪙"><div class="lbl">🌿 코인 평가</div><div class="val cm" id="c-coin">—</div><div class="sub">보유 코인 합계</div></div>
+      <div class="card o" data-e="😸"><div class="lbl">🐟 수익</div><div class="val co" id="c-pnl">—</div><div class="sub" id="c-pnl-sub">평균 수익률</div></div>
+    </div>
+
+    <!-- 보유 코인 -->
+    <div class="stitle">🐾 보유 코인</div>
+    <div id="holdings"><div class="empty">🐱 냥이가 잔고 확인 중...</div></div>
+  </div>
+
+  <!-- ── 시장 탭 ── -->
+  <div id="tab-market" class="page">
+    <div class="stitle">📈 거래량 TOP 50</div>
+    <div id="market-wrap"><div class="empty">🐱 시세 불러오는 중...</div></div>
+  </div>
+
+  <footer>
+    <div class="paws">🐾🐾🐾🐾🐾</div>
+    NAMO Dashboard · 고등어 냥이 에디션 · 30초 자동 갱신
+  </footer>
+</div>
+
+<script>
+// ── 설정: Render 배포 후 실제 URL로 변경 ──────────────────
+const API = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+  ? 'http://localhost:4000'
+  : 'https://namo-dashboard-api.onrender.com'; // Render 배포 URL로 교체
+
+const EMOJI = {BTC:'₿',ETH:'Ξ',XRP:'✦',XLM:'✧',SOL:'◎',DOGE:'Ð',BABY:'🍼',D:'◇',BIO:'🧬'};
+
+function krw(n){
+  if(n==null||isNaN(n))return'—';
+  return'₩'+Math.round(n).toLocaleString('ko-KR');
+}
+function pct(n,dec=2){
+  if(n==null||isNaN(n))return'—';
+  return(n>=0?'+':'')+parseFloat(n).toFixed(dec)+'%';
+}
+function vol(n){
+  if(n>=1e12)return(n/1e12).toFixed(1)+'조';
+  if(n>=1e8) return(n/1e8).toFixed(1)+'억';
+  if(n>=1e4) return(n/1e4).toFixed(1)+'만';
+  return Math.round(n).toLocaleString();
+}
+
+function showTab(name){
+  document.querySelectorAll('.tab').forEach((t,i)=>{
+    t.classList.toggle('active',['portfolio','market'][i]===name);
+  });
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  if(name==='market') loadMarket();
+}
+
+async function loadAll(){
+  try{
+    const r=await fetch(API+'/api/balance');
+    const d=await r.json();
+    if(d.error){document.getElementById('holdings').innerHTML='<div class="empty" style="color:#e03e3e">😿 '+d.error+'</div>';return;}
+
+    document.getElementById('upd').textContent='🕐 '+d.updatedAt;
+    document.getElementById('c-total').textContent=krw(d.totalAsset);
+    document.getElementById('c-krw').textContent=krw(d.krw);
+    document.getElementById('c-coin').textContent=krw(d.coinValue);
+
+    // 총 수익 계산
+    let totalPnl=0,cnt=0;
+    d.holdings.forEach(h=>{if(h.pnlKrw!=null){totalPnl+=h.pnlKrw;cnt++;}});
+    const pnlEl=document.getElementById('c-pnl');
+    const pnlSubEl=document.getElementById('c-pnl-sub');
+    pnlEl.textContent=krw(totalPnl);
+    pnlEl.style.color=totalPnl>=0?'#3db887':'#e03e3e';
+    const avgPnl=cnt>0?(totalPnl/(d.coinValue||1)*100):null;
+    pnlSubEl.textContent=avgPnl!=null?pct(avgPnl)+' 수익률':'—';
+
+    // 경고
+    const warns=d.holdings.filter(h=>h.slGap!=null&&h.slGap>-5);
+    document.getElementById('alerts').innerHTML=warns.map(h=>`
+      <div class="alert">
+        <div class="ai">${h.slGap>-2?'🚨':'⚠️'}</div>
+        <div><h4>${h.slGap>-2?'긴급! 손절 임박!':'손절가 근접'} — ${h.symbol}</h4>
+        <p>현재 ${krw(h.price)} | 손절 ${krw(h.stopLoss)} | <strong style="color:#e03e3e">${h.slGap}% 남음</strong></p></div>
+      </div>`).join('');
+
+    // 코인 카드
+    if(!d.holdings.length){
+      document.getElementById('holdings').innerHTML='<div class="empty">😿 보유 코인 없음</div>';return;
+    }
+    document.getElementById('holdings').innerHTML='<div class="grid">'+d.holdings.map(h=>{
+      const up=h.change24h>=0;
+      const isDanger=h.slGap!=null&&h.slGap>-5;
+      let slHtml='';
+      if(h.stopLoss!=null){
+        const gap=h.slGap;
+        const fill=Math.max(0,Math.min(100,((-gap)/30)*100));
+        const bc=gap>-3?'danger':gap>-8?'warn':'safe';
+        const gc=gap>-3?'#e03e3e':gap>-8?'#ff8c00':'#3db887';
+        slHtml=`<div class="sl-wrap">
+          <div class="sl-head"><span>🛡️ 손절 안전거리</span><span>${krw(h.stopLoss)}</span></div>
+          <div class="bar-bg"><div class="bar ${bc}" style="width:${fill}%"></div></div>
+          <div class="sl-gap" style="color:${gc}">${gap}% 남음</div>
+        </div>`;
+      }
+      let pnlHtml='';
+      if(h.avgBuy){
+        const cls=h.pnlKrw>=0?'pnl-pos':'pnl-neg';
+        pnlHtml=`<div class="pnl-row">
+          <span class="pnl-lbl">매수가 ${krw(h.avgBuy)}</span>
+          <span class="${cls}">${pct(h.pnlPct)} (${krw(h.pnlKrw)})</span>
+        </div>`;
+      }
+      return`<div class="cc ${isDanger?'danger':''}">
+        <div class="cc-top">
+          <div class="coin-left">
+            <div class="icon ${h.symbol}">${EMOJI[h.symbol]||'🪙'}</div>
+            <div><div class="cn">${h.symbol}</div><div class="cq">${h.total.toFixed(4)}개</div></div>
+          </div>
+          <div class="chg ${up?'up':'dn'}">${pct(h.change24h)}</div>
+        </div>
+        <div class="cp2">${krw(h.price)}</div>
+        <div class="cv">평가금액 <strong>${krw(h.value)}</strong></div>
+        ${pnlHtml}${slHtml}
+      </div>`;
+    }).join('')+'</div>';
+  }catch(e){
+    document.getElementById('holdings').innerHTML='<div class="empty" style="color:#e03e3e">😿 연결 오류<br><small>'+e.message+'</small></div>';
+  }
+}
+
+async function loadMarket(){
+  try{
+    document.getElementById('market-wrap').innerHTML='<div class="empty">🐱 시세 불러오는 중...</div>';
+    const r=await fetch(API+'/api/market');
+    const list=await r.json();
+    if(list.error){document.getElementById('market-wrap').innerHTML='<div class="empty" style="color:#e03e3e">😿 '+list.error+'</div>';return;}
+    document.getElementById('market-wrap').innerHTML=`
+      <div class="mkt-table">
+        <table>
+          <thead><tr>
+            <th>#</th><th>코인</th><th>현재가</th><th>24h</th><th>거래량</th><th>고가</th><th>저가</th>
+          </tr></thead>
+          <tbody>${list.map((c,i)=>{
+            const up=c.change>=0;
+            return`<tr>
+              <td class="rank">${i+1}</td>
+              <td><strong>${c.symbol}</strong></td>
+              <td>${krw(c.price)}</td>
+              <td class="${up?'up':'dn'}" style="background:none;padding:0 14px;font-weight:800">${pct(c.change)}</td>
+              <td style="color:#9b7e6e">${vol(c.volume)}원</td>
+              <td style="color:#2ea05a">${krw(c.high)}</td>
+              <td style="color:#e03e3e">${krw(c.low)}</td>
+            </tr>`;
+          }).join('')}</tbody>
+        </table>
+      </div>`;
+  }catch(e){
+    document.getElementById('market-wrap').innerHTML='<div class="empty" style="color:#e03e3e">😿 오류: '+e.message+'</div>';
+  }
+}
+
+loadAll();
+setInterval(loadAll,30000);
+</script>
+</body>
+</html>
