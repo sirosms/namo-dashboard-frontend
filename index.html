@@ -6,7 +6,7 @@
 <title>🐱 NAMO — 고등어 냥이 대시보드</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="namo-emoji.png">
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -126,6 +126,21 @@ header{background:linear-gradient(135deg,#ff85a2,#c9b8f5);height:64px;display:fl
 .mkt-table td{padding:10px 14px;border-top:1px solid #ffeef2;font-size:13px;font-weight:600}
 .mkt-table tr:hover td{background:#fffafc}
 .rank{color:var(--ts);font-size:12px}
+
+/* ── 보유 코인 테이블 ─── */
+.htbl{overflow-x:auto}
+.htbl table{min-width:680px}
+.htbl th,.htbl td{white-space:nowrap}
+.htbl .rt{text-align:right}
+.htbl .mono{font-family:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px}
+.htbl .muted{color:#c9b8c3;font-weight:600}
+.htbl .coin-cell{display:flex;align-items:center;gap:8px}
+.htbl .coin-cell .icon{width:26px;height:26px;font-size:12px}
+.htbl tbody tr{transition:background .15s}
+.htbl tbody tr:hover td{background:#fffafc}
+.htbl tr.row-danger td{background:#fff5f5}
+.htbl small{font-size:10px;font-weight:700;opacity:.85}
+.htbl .pnl-pos{color:#2ea05a;font-weight:800}.htbl .pnl-neg{color:#e03e3e;font-weight:800}
 
 /* ── 로딩/빈 ─── */
 .empty{text-align:center;padding:40px;font-size:16px;font-weight:700;color:var(--ts)}
@@ -280,46 +295,43 @@ async function loadAll(){
         <p>현재 ${krw(h.price)} | 손절 ${krw(h.stopLoss)} | <strong style="color:#e03e3e">${h.slGap}% 남음</strong></p></div>
       </div>`).join('');
 
-    // 코인 카드
+    // 보유 코인 테이블 (모든 코인 표시)
     if(!d.holdings.length){
       document.getElementById('holdings').innerHTML='<div class="empty">😿 보유 코인 없음</div>';return;
     }
-    document.getElementById('holdings').innerHTML='<div class="grid">'+d.holdings.map(h=>{
-      const up=h.change24h>=0;
-      const isDanger=h.slGap!=null&&h.slGap>-5;
-      let slHtml='';
-      if(h.stopLoss!=null){
-        const gap=h.slGap;
-        const fill=Math.max(0,Math.min(100,((-gap)/30)*100));
-        const bc=gap>-3?'danger':gap>-8?'warn':'safe';
-        const gc=gap>-3?'#e03e3e':gap>-8?'#ff8c00':'#3db887';
-        slHtml=`<div class="sl-wrap">
-          <div class="sl-head"><span>🛡️ 손절 안전거리</span><span>${krw(h.stopLoss)}</span></div>
-          <div class="bar-bg"><div class="bar ${bc}" style="width:${fill}%"></div></div>
-          <div class="sl-gap" style="color:${gc}">${gap}% 남음</div>
-        </div>`;
-      }
-      let pnlHtml='';
-      if(h.avgBuy){
-        const cls=h.pnlKrw>=0?'pnl-pos':'pnl-neg';
-        pnlHtml=`<div class="pnl-row">
-          <span class="pnl-lbl">매수가 ${krw(h.avgBuy)}</span>
-          <span class="${cls}">${pct(h.pnlPct)} (${krw(h.pnlKrw)})</span>
-        </div>`;
-      }
-      return`<div class="cc ${isDanger?'danger':''}">
-        <div class="cc-top">
-          <div class="coin-left">
-            <div class="icon ${h.symbol}">${EMOJI[h.symbol]||'🪙'}</div>
-            <div><div class="cn">${h.symbol}</div><div class="cq">${h.total.toFixed(4)}개</div></div>
-          </div>
-          ${h.noMarket?'<div class="chg" style="background:#f0e8f5;color:var(--ts)">KRW 마켓 X</div>':`<div class="chg ${up?'up':'dn'}">${pct(h.change24h)}</div>`}
-        </div>
-        <div class="cp2">${h.noMarket?'<span style="font-size:13px;color:var(--ts)">시세 없음</span>':krw(h.price)}</div>
-        <div class="cv">평가금액 <strong>${krw(h.value)}</strong></div>
-        ${pnlHtml}${slHtml}
+    document.getElementById('holdings').innerHTML=`
+      <div class="mkt-table htbl">
+        <table>
+          <thead><tr>
+            <th>🐾 코인</th><th class="rt">보유수량</th><th class="rt">현재가</th><th class="rt">24h</th>
+            <th class="rt">평가금액</th><th class="rt">평균매수</th><th class="rt">평가손익</th><th class="rt">손절</th>
+          </tr></thead>
+          <tbody>${d.holdings.map(h=>{
+            const up=h.change24h>=0;
+            const danger=h.slGap!=null&&h.slGap>-5;
+            const qty=parseFloat(h.total.toFixed(8)).toString();
+            const chg=h.noMarket?'<span class="muted">—</span>':`<span class="${up?'up':'dn'}" style="background:none;padding:0;font-weight:800">${pct(h.change24h)}</span>`;
+            const priceC=h.noMarket?'<span class="muted">시세없음</span>':krw(h.price);
+            const avgC=h.avgBuy?krw(h.avgBuy):'<span class="muted">—</span>';
+            const pnlC=(h.pnlPct!=null)?`<span class="${h.pnlKrw>=0?'pnl-pos':'pnl-neg'}">${pct(h.pnlPct)}<br><small>${krw(h.pnlKrw)}</small></span>`:'<span class="muted">—</span>';
+            let slC='<span class="muted">—</span>';
+            if(h.stopLoss!=null){
+              const gc=h.slGap>-3?'#e03e3e':h.slGap>-8?'#ff8c00':'#3db887';
+              slC=`${krw(h.stopLoss)}<br><small style="color:${gc}">${h.slGap}% 남음</small>`;
+            }
+            return`<tr class="${danger?'row-danger':''}">
+              <td><div class="coin-cell"><div class="icon ${h.symbol}">${EMOJI[h.symbol]||'🪙'}</div><strong>${h.symbol}</strong></div></td>
+              <td class="rt mono">${qty}</td>
+              <td class="rt mono">${priceC}</td>
+              <td class="rt">${chg}</td>
+              <td class="rt mono"><strong>${krw(h.value)}</strong></td>
+              <td class="rt mono">${avgC}</td>
+              <td class="rt">${pnlC}</td>
+              <td class="rt mono">${slC}</td>
+            </tr>`;
+          }).join('')}</tbody>
+        </table>
       </div>`;
-    }).join('')+'</div>';
   }catch(e){
     document.getElementById('holdings').innerHTML='<div class="empty" style="color:#e03e3e">😿 연결 오류<br><small>'+e.message+'</small></div>';
   }
