@@ -64,6 +64,17 @@ header{background:linear-gradient(135deg,#ff85a2,#c9b8f5);height:64px;display:fl
 .card .sub{font-size:10px;color:var(--ts);margin-top:3px;font-weight:600}
 .cp{color:var(--pink)}.cl{color:#8b72e0}.cm{color:var(--mint)}.co{color:#ff8c00}
 
+/* ── 실입금 대비 수익률 패널 ─── */
+.roi-panel{background:linear-gradient(135deg,#fff,#fff5f7);border:2px solid var(--pink-l);border-radius:18px;padding:18px 20px;margin-bottom:20px;box-shadow:var(--sh);display:flex;flex-wrap:wrap;align-items:center;gap:16px}
+.roi-main{display:flex;flex-direction:column;gap:2px;min-width:150px}
+.roi-lbl{font-size:11px;font-weight:800;color:var(--ts);text-transform:uppercase;letter-spacing:1px}
+.roi-val{font-size:30px;font-weight:900;color:var(--pink);line-height:1.1}
+.roi-note{font-size:10px;color:var(--ts);font-weight:600}
+.roi-sub{display:flex;gap:22px;flex-wrap:wrap;margin-left:auto}
+.roi-sub>div{display:flex;flex-direction:column;gap:2px}
+.roi-sub span{font-size:10px;font-weight:700;color:var(--ts)}
+.roi-sub b{font-size:15px;font-weight:900;color:var(--text)}
+
 /* ── 경고 배너 ─── */
 .alert{background:linear-gradient(135deg,#fff0f4,#fff8f0);border:2px solid var(--pink);border-radius:14px;padding:14px 16px;margin-bottom:12px;display:flex;align-items:flex-start;gap:10px}
 .alert .ai{font-size:24px;flex-shrink:0}
@@ -173,6 +184,21 @@ footer .paws{font-size:20px;margin-bottom:4px;letter-spacing:5px;opacity:.3}
       <div class="card l" data-e="🏦"><div class="lbl">💜 KRW 가용</div><div class="val cl" id="c-krw">—</div><div class="sub">즉시 사용 가능</div></div>
       <div class="card m" data-e="🪙"><div class="lbl">🌿 코인 평가</div><div class="val cm" id="c-coin">—</div><div class="sub">보유 코인 합계</div></div>
       <div class="card o" data-e="😸"><div class="lbl">🐟 수익</div><div class="val co" id="c-pnl">—</div><div class="sub" id="c-pnl-sub">평균 수익률</div></div>
+    </div>
+
+    <!-- 실입금 대비 수익률 -->
+    <div class="roi-panel" id="roi-panel" style="display:none">
+      <div class="roi-main">
+        <div class="roi-lbl">🐟 실입금 대비 수익률</div>
+        <div class="roi-val" id="roi-pct">—</div>
+        <div class="roi-note" id="roi-note"></div>
+      </div>
+      <div class="roi-sub">
+        <div><span>순입금액</span><b id="roi-net">—</b></div>
+        <div><span>평가손익</span><b id="roi-profit">—</b></div>
+        <div><span>누적 입금</span><b id="roi-dep">—</b></div>
+        <div><span>누적 출금</span><b id="roi-wd">—</b></div>
+      </div>
     </div>
 
     <!-- 보유 코인 -->
@@ -299,6 +325,29 @@ async function loadAll(){
   }
 }
 
+let lastRoi=0;
+async function loadRoi(force){
+  if(!force && Date.now()-lastRoi<180000) return; // 3분 throttle (입출금 스캔 부담 절감)
+  try{
+    const r=await fetch(API+'/api/roi',{headers:{'ngrok-skip-browser-warning':'true'}});
+    const d=await r.json();
+    // 입금 데이터가 안 잡히면(레거시 API 한계) 패널 숨김 — 대시보드는 정상 동작
+    if(d.error||d.roiPct==null||!d.verified){return;}
+    lastRoi=Date.now();
+    document.getElementById('roi-panel').style.display='flex';
+    const el=document.getElementById('roi-pct');
+    el.textContent=pct(d.roiPct);
+    el.style.color=d.roiPct>=0?'#3db887':'#e03e3e';
+    document.getElementById('roi-net').textContent=krw(d.netDeposit);
+    const pf=document.getElementById('roi-profit');
+    pf.textContent=(d.profit>=0?'+':'')+krw(d.profit);
+    pf.style.color=d.profit>=0?'#3db887':'#e03e3e';
+    document.getElementById('roi-dep').textContent=krw(d.deposit);
+    document.getElementById('roi-wd').textContent=krw(d.withdraw);
+    document.getElementById('roi-note').textContent='현재 총자산 '+krw(d.totalAsset)+' 기준 · '+d.updatedAt;
+  }catch(e){}
+}
+
 async function loadMarket(){
   try{
     document.getElementById('market-wrap').innerHTML='<div class="empty">🐱 시세 불러오는 중...</div>';
@@ -331,7 +380,9 @@ async function loadMarket(){
 }
 
 loadAll();
+loadRoi(true);
 setInterval(loadAll,30000);
+setInterval(()=>loadRoi(true),180000); // ROI 3분마다 갱신
 </script>
 </body>
 </html>
