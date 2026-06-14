@@ -225,7 +225,7 @@ function showTab(name){
 
 async function loadAll(){
   try{
-    const r=await fetch(API+'/api/balance');
+    const r=await fetch(API+'/api/balance',{headers:{'ngrok-skip-browser-warning':'true'}});
     const d=await r.json();
     if(d.error){document.getElementById('holdings').innerHTML='<div class="empty" style="color:#e03e3e">😿 '+d.error+'</div>';return;}
 
@@ -301,7 +301,7 @@ async function loadAll(){
 async function loadMarket(){
   try{
     document.getElementById('market-wrap').innerHTML='<div class="empty">🐱 시세 불러오는 중...</div>';
-    const r=await fetch(API+'/api/market');
+    const r=await fetch(API+'/api/market',{headers:{'ngrok-skip-browser-warning':'true'}});
     const list=await r.json();
     if(list.error){document.getElementById('market-wrap').innerHTML='<div class="empty" style="color:#e03e3e">😿 '+list.error+'</div>';return;}
     document.getElementById('market-wrap').innerHTML=`
