@@ -379,7 +379,7 @@ async function loadAll(){
         </table>
       </div>`;
   }catch(e){
-    document.getElementById('holdings').innerHTML='<div class="empty" style="color:#e03e3e">😿 연결 오류<br><small>'+e.message+'</small></div>';
+    document.getElementById('holdings').innerHTML='<div class="empty" style="color:#e03e3e">😿 백엔드에 연결할 수 없어요<br><small style="color:var(--ts)">ngrok 터널이 오프라인이거나 Render 서버가 자고 있어요.<br>잠시 후 자동으로 다시 시도해요 ('+e.message+')</small></div>';
   }
 }
 
