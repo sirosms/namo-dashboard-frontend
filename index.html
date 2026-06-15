@@ -147,6 +147,14 @@ header{background:linear-gradient(135deg,#ff85a2,#c9b8f5);height:64px;display:fl
 .htbl small{font-size:10px;font-weight:700;opacity:.85}
 .htbl .pnl-pos{color:#2ea05a;font-weight:800}.htbl .pnl-neg{color:#e03e3e;font-weight:800}
 
+/* ── 스테이킹 ─── */
+.stitle-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.btn-mini{background:var(--pink-l);color:var(--pink);border:none;padding:5px 13px;border-radius:14px;font-family:'Nunito',sans-serif;font-size:11px;font-weight:800;cursor:pointer;transition:.15s}
+.btn-mini:hover{background:var(--pink);color:#fff}
+.btn-del{background:none;border:none;cursor:pointer;font-size:14px;opacity:.6;transition:.15s}
+.btn-del:hover{opacity:1;transform:scale(1.15)}
+.htbl tr.total-row td{border-top:2px solid var(--pink-l);background:#fff5f7;font-weight:800}
+
 /* ── 로딩/빈 ─── */
 .empty{text-align:center;padding:40px;font-size:16px;font-weight:700;color:var(--ts)}
 
@@ -230,6 +238,14 @@ footer .paws{font-size:20px;margin-bottom:4px;letter-spacing:5px;opacity:.3}
     <!-- 보유 코인 -->
     <div class="stitle">🐾 보유 코인</div>
     <div id="holdings"><div class="empty">🐱 냥이가 잔고 확인 중...</div></div>
+
+    <!-- 스테이킹 / Earn (수동 입력) -->
+    <div class="stitle stitle-row" style="margin-top:24px">
+      🪙 스테이킹 / Earn
+      <button class="btn-mini" onclick="addStaking()">+ 코인 추가</button>
+      <span style="font-size:10px;font-weight:600;color:var(--ts)">빗썸 API에 안 잡혀서 수동 입력해요</span>
+    </div>
+    <div id="staking"></div>
   </div>
 
   <!-- ── 시장 탭 ── -->
@@ -301,7 +317,8 @@ async function loadAll(){
     if(d.error){document.getElementById('holdings').innerHTML='<div class="empty" style="color:#e03e3e">😿 '+d.error+'</div>';return;}
 
     document.getElementById('upd').textContent='🕐 '+d.updatedAt;
-    document.getElementById('c-total').textContent=krw(d.totalAsset);
+    lastBalanceTotal=d.totalAsset;
+    refreshTotal();   // 스테이킹 합산 반영
     document.getElementById('c-krw').textContent=krw(d.krw);
     document.getElementById('c-coin').textContent=krw(d.coinValue);
 
@@ -388,6 +405,59 @@ async function loadRoi(force){
   }catch(e){}
 }
 
+// ── 스테이킹 / Earn (수동 입력, localStorage) ──────────────
+let stakingTotal=0, lastBalanceTotal=0;
+function getStaking(){ try{return JSON.parse(localStorage.getItem('namo_staking')||'[]')}catch(e){return[]} }
+function setStaking(a){ localStorage.setItem('namo_staking',JSON.stringify(a)); }
+function refreshTotal(){
+  document.getElementById('c-total').textContent=krw(lastBalanceTotal+stakingTotal);
+  const sub=document.querySelector('.card.p .sub');
+  if(sub) sub.textContent = stakingTotal>0 ? 'KRW + 코인 + 스테이킹' : 'KRW + 코인';
+}
+function addStaking(){
+  const sym=(prompt('스테이킹 코인 심볼을 입력하세요 (예: ETH, SOL, BABY)')||'').trim().toUpperCase();
+  if(!sym) return;
+  if(!/^[A-Z0-9]{1,12}$/.test(sym)){ alert('코인 심볼이 올바르지 않아요 🐱'); return; }
+  const cur=getStaking().find(s=>s.sym===sym);
+  const amt=parseFloat((prompt(sym+' 스테이킹 수량'+(cur?` (현재 ${cur.amount})`:''))||'').trim());
+  if(!(amt>0)){ alert('수량이 올바르지 않아요 🐱'); return; }
+  const list=getStaking(); const ex=list.find(s=>s.sym===sym);
+  if(ex) ex.amount=amt; else list.push({sym,amount:amt});
+  setStaking(list); loadStaking();
+}
+function removeStaking(sym){
+  if(!confirm(sym+' 스테이킹을 삭제할까요?')) return;
+  setStaking(getStaking().filter(s=>s.sym!==sym)); loadStaking();
+}
+async function loadStaking(){
+  const list=getStaking();
+  const wrap=document.getElementById('staking');
+  if(!list.length){
+    stakingTotal=0; refreshTotal();
+    wrap.innerHTML='<div class="empty" style="padding:24px;font-size:13px">🐱 스테이킹 코인이 없어요<br><small style="color:var(--ts)">위 “+ 코인 추가”로 직접 등록하면 총자산에 합산돼요</small></div>';
+    return;
+  }
+  // 현재 시세 조회 (실패해도 항목은 표시)
+  const rows=await Promise.all(list.map(async s=>{
+    let price=0;
+    try{ const t=await fetchJSON('/api/ticker/'+s.sym); price=t&&t.price?t.price:0; }catch(e){}
+    return {sym:s.sym, amount:s.amount, price, value:price*s.amount};
+  }));
+  stakingTotal=rows.reduce((a,r)=>a+r.value,0);
+  refreshTotal();
+  wrap.innerHTML=`<div class="mkt-table htbl"><table>
+    <thead><tr><th>🪙 코인</th><th class="rt">수량</th><th class="rt">현재가</th><th class="rt">평가금액</th><th class="rt">관리</th></tr></thead>
+    <tbody>${rows.map(r=>`<tr>
+      <td><div class="coin-cell"><div class="icon ${r.sym}">${EMOJI[r.sym]||'🪙'}</div><strong>${r.sym}</strong></div></td>
+      <td class="rt mono">${parseFloat(r.amount.toFixed(8))}</td>
+      <td class="rt mono">${r.price?krw(r.price):'<span class="muted">시세없음</span>'}</td>
+      <td class="rt mono"><strong>${r.value?krw(r.value):'—'}</strong></td>
+      <td class="rt"><button class="btn-del" title="삭제" onclick="removeStaking('${r.sym}')">🗑️</button></td>
+    </tr>`).join('')}
+      <tr class="total-row"><td class="rt" colspan="3">스테이킹 합계</td><td class="rt mono"><strong style="color:var(--mint)">${krw(stakingTotal)}</strong></td><td></td></tr>
+    </tbody></table></div>`;
+}
+
 async function loadMarket(){
   try{
     document.getElementById('market-wrap').innerHTML='<div class="empty">🐱 시세 불러오는 중...</div>';
@@ -420,8 +490,10 @@ async function loadMarket(){
 
 loadAll();
 loadRoi(true);
+loadStaking();
 setInterval(loadAll,30000);
 setInterval(()=>loadRoi(true),180000); // ROI 3분마다 갱신
+setInterval(loadStaking,60000);        // 스테이킹 시세 1분마다 갱신
 </script>
 </body>
 </html>
