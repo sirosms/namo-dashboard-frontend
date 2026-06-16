@@ -167,10 +167,39 @@ header{background:linear-gradient(135deg,#ff85a2,#c9b8f5);height:64px;display:fl
 footer{text-align:center;padding:28px 0 16px;font-size:11px;color:var(--ts);font-weight:600}
 footer .paws{font-size:20px;margin-bottom:4px;letter-spacing:5px;opacity:.3}
 
-/* ── 모바일: 페이지 가로 스크롤 방지 (시장 테이블은 내부 스크롤로 처리) ─── */
+/* ── 모바일: 테이블 → 카드형 변환 (가로 스크롤 완전 제거) ─── */
 @media(max-width:640px){
-  .mkt-table:not(.htbl){overflow-x:auto;-webkit-overflow-scrolling:touch}
-  .mkt-table:not(.htbl) th,.mkt-table:not(.htbl) td{white-space:nowrap}
+  .mkt-table{background:none!important;box-shadow:none!important;border-radius:0;overflow:visible}
+  .htbl{overflow-x:visible}
+  .htbl table{min-width:0!important}
+  .mkt-table table,.mkt-table tbody,.mkt-table tr,.mkt-table td{display:block;width:100%}
+  .mkt-table thead{display:none}
+  .mkt-table tbody tr{
+    background:#fff;border:2px solid var(--pink-l);border-radius:14px;
+    padding:10px 14px;margin-bottom:12px;box-shadow:var(--sh)
+  }
+  .mkt-table tbody tr.row-danger{border-color:#ffb3b3;background:linear-gradient(135deg,#fff,#fff5f5)}
+  .mkt-table tbody tr:hover td{background:none}
+  .mkt-table td{
+    display:flex!important;justify-content:space-between;align-items:center;gap:12px;
+    text-align:right!important;white-space:normal!important;
+    padding:7px 0!important;border:none!important;border-top:1px solid #ffeef2!important;font-size:13px
+  }
+  .mkt-table td:first-child{border-top:none!important}
+  .mkt-table td::before{
+    content:attr(data-label);flex-shrink:0;text-align:left;
+    font-size:10px;font-weight:800;color:var(--ts);text-transform:uppercase;letter-spacing:.5px
+  }
+  .mkt-table td.chead{justify-content:flex-start;font-size:16px;font-weight:900;border-top:none!important;padding-bottom:6px!important}
+  .mkt-table td.chead::before{display:none}
+  .mkt-table .coin-cell{justify-content:flex-start}
+  .mkt-table tr.total-row{
+    display:flex!important;justify-content:space-between;align-items:center;
+    background:#fff5f7;border:2px solid var(--pink-l);border-radius:14px;padding:12px 14px;margin-bottom:12px
+  }
+  .mkt-table tr.total-row td{border:none!important;border-top:none!important;padding:0!important;font-weight:800}
+  .mkt-table tr.total-row td::before{display:none}
+  .mkt-table tr.total-row td:empty{display:none}
 }
 </style>
 </head>
@@ -373,14 +402,14 @@ async function loadAll(){
               slC=`${krw(h.stopLoss)}<br><small style="color:${gc}">${h.slGap}% 남음</small>`;
             }
             return`<tr class="${danger?'row-danger':''}">
-              <td><div class="coin-cell"><div class="icon ${h.symbol}">${EMOJI[h.symbol]||'🪙'}</div><strong>${h.symbol}</strong></div></td>
-              <td class="rt mono">${qty}</td>
-              <td class="rt mono">${priceC}</td>
-              <td class="rt">${chg}</td>
-              <td class="rt mono"><strong>${krw(h.value)}</strong></td>
-              <td class="rt mono">${avgC}</td>
-              <td class="rt">${pnlC}</td>
-              <td class="rt mono">${slC}</td>
+              <td class="chead"><div class="coin-cell"><div class="icon ${h.symbol}">${EMOJI[h.symbol]||'🪙'}</div><strong>${h.symbol}</strong></div></td>
+              <td class="rt mono" data-label="보유수량">${qty}</td>
+              <td class="rt mono" data-label="현재가">${priceC}</td>
+              <td class="rt" data-label="24h">${chg}</td>
+              <td class="rt mono" data-label="평가금액"><strong>${krw(h.value)}</strong></td>
+              <td class="rt mono" data-label="평균매수">${avgC}</td>
+              <td class="rt" data-label="평가손익">${pnlC}</td>
+              <td class="rt mono" data-label="손절">${slC}</td>
             </tr>`;
           }).join('')}</tbody>
         </table>
@@ -455,11 +484,11 @@ async function loadStaking(){
   wrap.innerHTML=`<div class="mkt-table htbl"><table>
     <thead><tr><th>🪙 코인</th><th class="rt">수량</th><th class="rt">현재가</th><th class="rt">평가금액</th><th class="rt">관리</th></tr></thead>
     <tbody>${rows.map(r=>`<tr>
-      <td><div class="coin-cell"><div class="icon ${r.sym}">${EMOJI[r.sym]||'🪙'}</div><strong>${r.sym}</strong></div></td>
-      <td class="rt mono">${parseFloat(r.amount.toFixed(8))}</td>
-      <td class="rt mono">${r.price?krw(r.price):'<span class="muted">시세없음</span>'}</td>
-      <td class="rt mono"><strong>${r.value?krw(r.value):'—'}</strong></td>
-      <td class="rt"><button class="btn-del" title="삭제" onclick="removeStaking('${r.sym}')">🗑️</button></td>
+      <td class="chead"><div class="coin-cell"><div class="icon ${r.sym}">${EMOJI[r.sym]||'🪙'}</div><strong>${r.sym}</strong></div></td>
+      <td class="rt mono" data-label="수량">${parseFloat(r.amount.toFixed(8))}</td>
+      <td class="rt mono" data-label="현재가">${r.price?krw(r.price):'<span class="muted">시세없음</span>'}</td>
+      <td class="rt mono" data-label="평가금액"><strong>${r.value?krw(r.value):'—'}</strong></td>
+      <td class="rt" data-label="관리"><button class="btn-del" title="삭제" onclick="removeStaking('${r.sym}')">🗑️</button></td>
     </tr>`).join('')}
       <tr class="total-row"><td class="rt" colspan="3">스테이킹 합계</td><td class="rt mono"><strong style="color:var(--mint)">${krw(stakingTotal)}</strong></td><td></td></tr>
     </tbody></table></div>`;
@@ -479,13 +508,13 @@ async function loadMarket(){
           <tbody>${list.map((c,i)=>{
             const up=c.change>=0;
             return`<tr>
-              <td class="rank">${i+1}</td>
-              <td><strong>${c.symbol}</strong></td>
-              <td>${krw(c.price)}</td>
-              <td class="${up?'up':'dn'}" style="background:none;padding:0 14px;font-weight:800">${pct(c.change)}</td>
-              <td style="color:#9b7e6e">${vol(c.volume)}원</td>
-              <td style="color:#2ea05a">${krw(c.high)}</td>
-              <td style="color:#e03e3e">${krw(c.low)}</td>
+              <td class="rank" data-label="순위">${i+1}</td>
+              <td class="chead"><strong>${c.symbol}</strong></td>
+              <td data-label="현재가">${krw(c.price)}</td>
+              <td class="${up?'up':'dn'}" style="background:none;font-weight:800" data-label="24h">${pct(c.change)}</td>
+              <td style="color:#9b7e6e" data-label="거래량">${vol(c.volume)}원</td>
+              <td style="color:#2ea05a" data-label="고가">${krw(c.high)}</td>
+              <td style="color:#e03e3e" data-label="저가">${krw(c.low)}</td>
             </tr>`;
           }).join('')}</tbody>
         </table>
