@@ -371,14 +371,16 @@ async function loadAll(){
     const avgPnl=cnt>0?(totalPnl/(d.coinValue||1)*100):null;
     pnlSubEl.textContent=avgPnl!=null?pct(avgPnl)+' 수익률':'—';
 
-    // 경고
+    // 손절 임박 요약 (상세 알림은 텔레그램으로 발송 — 대시보드는 한눈에)
     const warns=d.holdings.filter(h=>h.slGap!=null&&h.slGap>-5);
-    document.getElementById('alerts').innerHTML=warns.map(h=>`
-      <div class="alert">
-        <div class="ai">${h.slGap>-2?'🚨':'⚠️'}</div>
-        <div><h4>${h.slGap>-2?'긴급! 손절 임박!':'손절가 근접'} — ${h.symbol}</h4>
-        <p>현재 ${krw(h.price)} | 손절 ${krw(h.stopLoss)} | <strong style="color:#e03e3e">${h.slGap}% 남음</strong></p></div>
-      </div>`).join('');
+    document.getElementById('alerts').innerHTML = warns.length
+      ? `<div class="alert">
+           <div class="ai">${warns.some(h=>h.slGap>-2)?'🚨':'⚠️'}</div>
+           <div><h4>손절 임박 ${warns.length}종목</h4>
+           <p>${warns.map(h=>`<b>${h.symbol}</b> ${h.slGap}%`).join(' · ')}
+           <span style="color:var(--ts);font-weight:600">— 상세는 텔레그램 발송</span></p></div>
+         </div>`
+      : '';
 
     // 보유 코인 테이블 (모든 코인 표시)
     if(!d.holdings.length){
@@ -388,8 +390,8 @@ async function loadAll(){
       <div class="mkt-table htbl">
         <table>
           <thead><tr>
-            <th>🐾 코인</th><th class="rt">보유수량</th><th class="rt">현재가</th><th class="rt">24h</th>
-            <th class="rt">평가금액</th><th class="rt">평균매수</th><th class="rt">평가손익</th><th class="rt">손절</th>
+            <th>🐾 코인 · 손절</th><th class="rt">보유수량</th><th class="rt">현재가</th><th class="rt">24h</th>
+            <th class="rt">평가금액</th><th class="rt">평균매수</th><th class="rt">평가손익</th>
           </tr></thead>
           <tbody>${d.holdings.map(h=>{
             const up=h.change24h>=0;
@@ -401,21 +403,24 @@ async function loadAll(){
               ?`${krw(h.avgBuy)}${h.avgBuySrc==='manual'?'<br><small class="muted">수동입력</small>':''}`
               :'<span class="muted">전송받음<br><small>매수가 없음</small></span>';
             const pnlC=(h.pnlPct!=null)?`<span class="${h.pnlKrw>=0?'pnl-pos':'pnl-neg'}">${pct(h.pnlPct)}<br><small>${krw(h.pnlKrw)}</small></span>`:'<span class="muted">—</span>';
-            let slC='<span class="muted">—</span>';
+            // 손절가·근거·위험표시를 코인 셀에 통합
+            let slLine='';
             if(h.stopLoss!=null){
               const gc=h.slGap>-3?'#e03e3e':h.slGap>-8?'#ff8c00':'#3db887';
-              slC=`${krw(h.stopLoss)}<br><small style="color:${gc}">${h.slGap}% 남음</small>`
-                + (h.slBasis?`<br><small style="color:var(--ts);opacity:.75">${h.slBasis}</small>`:'');
+              slLine=`<div style="font-size:10px;font-weight:700;color:${gc};margin-top:3px;line-height:1.35">`
+                +`🛡 ${krw(h.stopLoss)} <span>${h.slGap}%</span>`
+                +(h.slBasis?` <span style="color:var(--ts);opacity:.7;font-weight:600">${h.slBasis}</span>`:'')
+                +`</div>`;
             }
             return`<tr class="${danger?'row-danger':''}">
-              <td class="chead"><div class="coin-cell"><div class="icon ${h.symbol}">${EMOJI[h.symbol]||'🪙'}</div><strong>${h.symbol}</strong></div></td>
+              <td class="chead"><div class="coin-cell"><div class="icon ${h.symbol}">${EMOJI[h.symbol]||'🪙'}</div>
+                <div><strong>${h.symbol}</strong>${danger?' <span style="font-size:11px">⚠️</span>':''}${slLine}</div></div></td>
               <td class="rt mono" data-label="보유수량">${qty}</td>
               <td class="rt mono" data-label="현재가">${priceC}</td>
               <td class="rt" data-label="24h">${chg}</td>
               <td class="rt mono" data-label="평가금액"><strong>${krw(h.value)}</strong></td>
               <td class="rt mono" data-label="평균매수">${avgC}</td>
               <td class="rt" data-label="평가손익">${pnlC}</td>
-              <td class="rt mono" data-label="손절">${slC}</td>
             </tr>`;
           }).join('')}</tbody>
         </table>
