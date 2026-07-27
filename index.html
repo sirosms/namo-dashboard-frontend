@@ -55,6 +55,20 @@ header{background:linear-gradient(135deg,#ff85a2,#c9b8f5);height:64px;display:fl
 .banner-text h2{font-size:17px;font-weight:900;color:var(--pink);margin-bottom:4px}
 .banner-text p{font-size:12px;color:var(--ts);line-height:1.6;font-weight:600}
 
+/* ── 자동매매 봇 상태 ─── */
+.bot-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:20px}
+@media(min-width:640px){.bot-grid{grid-template-columns:repeat(4,1fr)}}
+.bot{background:#fff;border-radius:14px;padding:12px 14px;box-shadow:var(--sh);border:2px solid var(--pink-l);display:flex;align-items:center;gap:10px}
+.bot.on{border-color:#d4f5ec;background:linear-gradient(135deg,#fff,#f0fdf8)}
+.bot.off{border-color:#ffd0d0;background:linear-gradient(135deg,#fff,#fff5f5)}
+.bot .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.bot.on .dot{background:#3db887;box-shadow:0 0 0 4px rgba(61,184,135,.15);animation:blink 1.6s ease-in-out infinite}
+.bot.off .dot{background:#e03e3e;box-shadow:0 0 0 4px rgba(224,62,62,.12)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+.bot .bn{font-size:13px;font-weight:800;color:var(--text);line-height:1.2}
+.bot .bs{font-size:10px;font-weight:700;margin-top:2px}
+.bot.on .bs{color:#2ea05a}.bot.off .bs{color:#e03e3e}
+
 /* ── 요약 카드 ─── */
 .cards{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px}
 @media(min-width:640px){.cards{grid-template-columns:repeat(4,1fr)}}
@@ -244,6 +258,10 @@ footer .paws{font-size:20px;margin-bottom:4px;letter-spacing:5px;opacity:.3}
         30초마다 자동 업데이트 ₩(*ΦωΦ*)₩</p>
       </div>
     </div>
+
+    <!-- 자동매매 봇 상태 -->
+    <div class="stitle" style="margin-top:0">🤖 자동매매 봇 <span id="bots-sum" style="font-size:11px;font-weight:700;color:var(--ts)"></span></div>
+    <div id="bots" class="bot-grid"><div class="empty" style="grid-column:1/-1;padding:16px;font-size:13px">🐱 봇 상태 확인 중...</div></div>
 
     <!-- 손절 경고 -->
     <div id="alerts"></div>
@@ -550,6 +568,34 @@ async function loadStaking(){
     </tbody></table></div>`;
 }
 
+// ── 자동매매 봇 상태 ───────────────────────────────────────
+// 봇은 사용자 PC에서 로컬 실행 → /api/bots 는 로컬(ngrok) 백엔드만 관측 가능.
+// Render는 이 라우트가 없어 404 → fetchJSON이 자동으로 ngrok 백엔드로 폴백한다.
+async function loadBots(){
+  const wrap=document.getElementById('bots');
+  const sum=document.getElementById('bots-sum');
+  try{
+    const d=await fetchJSON('/api/bots');
+    if(!d.supported){
+      sum.textContent='';
+      wrap.innerHTML='<div class="empty" style="grid-column:1/-1;padding:16px;font-size:12px">🐱 봇 상태는 로컬 서버에서만 확인돼요<br><small style="color:var(--ts)">봇 실행 PC의 대시보드 서버를 켜주세요</small></div>';
+      return;
+    }
+    sum.textContent='('+d.running+'/'+d.total+' 가동)';
+    wrap.innerHTML=d.bots.map(b=>`
+      <div class="bot ${b.running?'on':'off'}">
+        <div class="dot"></div>
+        <div>
+          <div class="bn">${b.name}</div>
+          <div class="bs">${b.running?'● 실행 중':'○ 정지'}</div>
+        </div>
+      </div>`).join('');
+  }catch(e){
+    sum.textContent='';
+    wrap.innerHTML='<div class="empty" style="grid-column:1/-1;padding:16px;font-size:12px;color:#e03e3e">😿 봇 상태를 불러올 수 없어요<br><small style="color:var(--ts)">로컬 대시보드 서버 또는 ngrok이 꺼져있을 수 있어요</small></div>';
+  }
+}
+
 async function loadMarket(){
   try{
     document.getElementById('market-wrap').innerHTML='<div class="empty">🐱 시세 불러오는 중...</div>';
@@ -581,9 +627,11 @@ async function loadMarket(){
 }
 
 loadAll();
+loadBots();
 loadRoi(true);
 loadStaking();
 setInterval(loadAll,30000);
+setInterval(loadBots,30000);           // 봇 상태 30초마다 갱신
 setInterval(()=>loadRoi(true),180000); // ROI 3분마다 갱신
 setInterval(loadStaking,60000);        // 스테이킹 시세 1분마다 갱신
 </script>
