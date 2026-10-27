@@ -329,7 +329,7 @@ const LOCAL = (window.location.hostname === 'localhost' || window.location.hostn
 const SAME_ORIGIN = (location.protocol === 'http:' || location.protocol === 'https:') && !LOCAL ? [location.origin] : [];
 const BACKENDS = LOCAL ? ['http://localhost:4000'] : [
   ...SAME_ORIGIN,                                          // 현재 도메인(=로컬서버 직결) 우선
-  'https://lesson-largest-float-knit.trycloudflare.com',  // Cloudflare 터널(로컬 백엔드 직결) — 우선
+  'https://talk-magazine-return-pay.trycloudflare.com',   // Cloudflare 터널(로컬 백엔드 직결) — 우선
   'https://namo-dashboard-api.onrender.com',              // Render 상시 배포 폴백
   'https://mop-muck-backwash.ngrok-free.dev',             // ngrok 폴백(월 한도 소진 시 자동 skip)
 ];
